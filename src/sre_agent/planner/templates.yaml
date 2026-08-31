@@ -1,0 +1,58 @@
+templates:
+  - id: firing_alerts
+    intent: firing_alerts
+    tool: am_list_alerts
+    params:
+      filter: 'status="firing"'
+  - id: alert_by_service
+    intent: alert_by_service
+    tool: am_list_alerts
+    params:
+      filter: '${service}'
+    slots:
+      service: {required: true}
+  - id: cpu_usage
+    intent: cpu_usage
+    tool: prom_query
+    promql: '100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[${window}])) * 100)'
+    slots:
+      window: {required: false, default: "15m"}
+  - id: memory_usage
+    intent: memory_usage
+    tool: prom_query
+    promql: '(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100'
+  - id: http_error_rate
+    intent: http_error_rate
+    tool: prom_query
+    promql: |
+      sum(rate(http_requests_total{job="${job}",code=~"5.."}[${window}]))
+      /
+      sum(rate(http_requests_total{job="${job}"}[${window}]))
+    slots:
+      job: {required: false, default: "api"}
+      window: {required: false, default: "15m"}
+  - id: http_latency
+    intent: http_latency
+    tool: prom_query
+    promql: 'histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job="${job}"}[${window}])) by (le))'
+    slots:
+      job: {required: false, default: "api"}
+      window: {required: false, default: "15m"}
+  - id: restart_count
+    intent: restart_count
+    tool: prom_query
+    promql: 'increase(kube_pod_container_status_restarts_total[${window}])'
+    slots:
+      service: {required: false, default: ".+"}
+      window: {required: false, default: "15m"}
+  - id: disk_usage
+    intent: disk_usage
+    tool: prom_query
+    promql: '(1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"})) * 100'
+  - id: target_health
+    intent: target_health
+    tool: prom_query
+    promql: 'up == 0'
+  - id: explain_promql
+    intent: explain_promql
+    tool: none
