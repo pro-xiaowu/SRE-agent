@@ -1,0 +1,42 @@
+# 全局配置
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alertmanager：同一 compose 网络里用服务名
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: alertmanager
+    static_configs:
+      - targets: ["alertmanager:9093"]
+
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["cadvisor:8080"]
+        labels:
+          instance: Prometheus服务器
+
+  - job_name: node-exporter
+    static_configs:
+      - targets: ["node_exporter:9100"]
+        labels:
+          instance: Prometheus服务器
+
+  # 另一台【应用机】上的 SRE-Agent，IP 写在 sre-agent-targets.yml
+  - job_name: sre-agent
+    scrape_interval: 15s
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/sre-agent-targets.yml
+        refresh_interval: 30s

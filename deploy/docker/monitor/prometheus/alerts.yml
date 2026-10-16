@@ -1,0 +1,12 @@
+groups:
+  - name: sre-agent-demo
+    rules:
+      - alert: SreAgentDemoFiring
+        expr: up{job="prometheus"} == 1
+        for: 10s
+        labels:
+          severity: info
+          service: prometheus
+        annotations:
+          summary: "演示告警：Prometheus 在线（给 SRE-Agent 列表用）"
+          description: "这不是故障。确认 Agent 能列出 Alertmanager 中的 firing 即可关掉本规则。"

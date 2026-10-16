@@ -1,0 +1,118 @@
+# 监控机 compose（Prometheus / Alertmanager / Grafana / cAdvisor / node_exporter）
+# 应用机不要用这份。启动：cd deploy/docker/monitor && docker compose up -d
+#
+# 监控机 192.168.100.30  应用机 192.168.100.31
+#   Prometheus    http://192.168.100.30:9090
+#   Grafana       http://192.168.100.30:3000  admin/password
+#   Alertmanager  http://192.168.100.30:9093
+
+volumes:
+  prometheus_data: {}
+  grafana_data: {}
+  alertmanager_data: {}
+
+networks:
+  monitoring:
+    driver: bridge
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.9.1
+    container_name: prometheus
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+      - --web.enable-lifecycle
+      - --storage.tsdb.retention.time=30d
+    networks:
+      - monitoring
+    expose:
+      - "9090"
+    ports:
+      - "9090:9090"
+    depends_on:
+      - alertmanager
+      - node_exporter
+
+  alertmanager:
+    image: prom/alertmanager:v0.31.1
+    container_name: alertmanager
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./alertmanager/:/etc/alertmanager/
+      - alertmanager_data:/alertmanager
+    command:
+      - --config.file=/etc/alertmanager/config.yml
+      - --storage.path=/alertmanager
+    networks:
+      - monitoring
+    expose:
+      - "9093"
+    ports:
+      - "9093:9093"
+
+  cadvisor:
+    # v0.33 不支持 RHEL cgroup v2，会 Restarting (255)。拉不了 gcr 可改 ghcr.io/google/cadvisor:v0.47.2
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    networks:
+      - monitoring
+    expose:
+      - "8080"
+
+  node_exporter:
+    image: prom/node-exporter:v1.10.2
+    container_name: node-exporter
+    restart: always
+    pid: host
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc|rootfs/var/lib/docker)($$|/)
+    networks:
+      - monitoring
+    expose:
+      - "9100"
+    ports:
+      - "9100:9100"
+
+  grafana:
+    image: grafana/grafana:12.4.0
+    container_name: grafana
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    env_file:
+      - ./grafana/config.monitoring
+    networks:
+      - monitoring
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus

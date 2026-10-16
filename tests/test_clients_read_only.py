@@ -49,3 +49,20 @@ def test_alertmanager_list_alerts_get():
     am = AlertmanagerClient("http://am", timeout=15, transport=t)
     am.list_alerts()
     assert t.calls[0][1].endswith("/api/v2/alerts")
+    params = t.calls[0][2]
+    assert params["active"] == "true"
+    assert "status=" not in str(params.get("filter", ""))
+
+
+def test_list_alerts_ignores_status_label_filter():
+    t = FakeTransport()
+
+    def get(url, params=None):
+        t.calls.append(("GET", url, params))
+        return []
+
+    t.get = get  # type: ignore[method-assign]
+    am = AlertmanagerClient("http://am", timeout=15, transport=t)
+    am.list_alerts('status="firing"')
+    assert t.calls[0][2] is not None
+    assert "filter" not in t.calls[0][2]

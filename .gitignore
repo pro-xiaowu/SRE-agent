@@ -2,8 +2,11 @@
 __pycache__/
 *.pyc
 .env
+.env.example
 data/
 .pytest_cache/
 *.egg-info/
 uv.lock.bak
 .idea/
+docs
+tests

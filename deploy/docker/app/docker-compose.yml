@@ -1,0 +1,30 @@
+# 应用机：只跑 PostgreSQL（会话 / 审批）。
+# SRE-Agent 用 uv 跑在同一台宿主机上，连 127.0.0.1:5432。
+# Prometheus / Alertmanager 在另一台监控机，不要在本机 up。
+#
+#   cd deploy/docker/app && docker compose up -d
+
+name: sre-agent-app
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: sre-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sre_agent
+      POSTGRES_PASSWORD: sre_agent
+      POSTGRES_DB: sre_agent
+    ports:
+      # Agent 与库同机，只绑本机
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sre_agent -d sre_agent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:

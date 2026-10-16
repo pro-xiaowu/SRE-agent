@@ -2,8 +2,8 @@ templates:
   - id: firing_alerts
     intent: firing_alerts
     tool: am_list_alerts
-    params:
-      filter: 'status="firing"'
+    # Alertmanager v2 的 filter 只能匹配标签，不能写 status="firing"
+    params: {}
   - id: alert_by_service
     intent: alert_by_service
     tool: am_list_alerts

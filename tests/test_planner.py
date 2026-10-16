@@ -6,6 +6,7 @@ def test_firing_alerts_uses_alertmanager():
     p = plan(IntentSlots(intent="firing_alerts", confidence=0.9), allow_ad_hoc=False)
     assert p.tool == "am_list_alerts"
     assert p.reject_reason is None
+    assert "status=" not in str(p.params.get("filter", ""))
 
 
 def test_http_error_rate_fills_defaults():

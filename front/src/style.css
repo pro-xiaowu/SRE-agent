@@ -1,0 +1,114 @@
+:root {
+  --rack: #141820;
+  --panel: #1c232e;
+  --panel-2: #252d3a;
+  --copper: #c47a3a;
+  --copper-hot: #e09a55;
+  --scope: #6ec8c4;
+  --paper: #e6e1d4;
+  --mute: #8b93a1;
+  --alarm: #d45b4a;
+  --ok: #7cb389;
+  --line: rgba(196, 122, 58, 0.28);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--rack);
+  color: var(--paper);
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+}
+
+button,
+textarea {
+  font-family: inherit;
+}
+
+.session-tools {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.new-session,
+.session-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.new-session {
+  background: var(--copper);
+  color: #1a120a;
+  font-weight: 600;
+}
+
+.session-item {
+  background: transparent;
+  color: var(--paper);
+}
+
+.session-item:hover,
+.session-item.active {
+  border-color: var(--copper);
+  color: var(--copper-hot);
+  background: rgba(196, 122, 58, 0.08);
+}
+
+.session-item small {
+  color: var(--mute);
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.session-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.delete-session {
+  border: 0;
+  background: transparent;
+  color: var(--mute);
+  padding: 0 0.15rem;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.delete-session:hover {
+  color: var(--alarm);
+}
+
+button:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

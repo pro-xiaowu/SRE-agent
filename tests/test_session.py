@@ -16,3 +16,18 @@ def test_clarification_counter():
     assert s.incr_clarification("x") == 2
     s.reset_clarification("x")
     assert s.clarification_count("x") == 0
+
+
+def test_session_catalog_roundtrip():
+    s = build_session_store(None)
+    s.create_session("a", "告警巡检")
+    s.append("a", "human", "现在有哪些告警？")
+
+    sessions = s.list_sessions()
+    assert sessions[0]["id"] == "a"
+    assert sessions[0]["title"] == "告警巡检"
+    assert sessions[0]["message_count"] == 1
+
+    s.delete_session("a")
+    assert s.list_sessions() == []
+    assert s.history("a") == []

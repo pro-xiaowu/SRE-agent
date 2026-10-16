@@ -8,7 +8,14 @@ class AlertmanagerClient:
         self.http = ReadOnlyClient(base_url, timeout, transport=transport)
 
     def list_alerts(self, filter: str | None = None) -> list:
-        params = {"filter": filter} if filter else None
+        # v2：active/silenced/inhibited 才是状态；filter 只用于标签匹配
+        params: dict = {
+            "active": "true",
+            "silenced": "false",
+            "inhibited": "false",
+        }
+        if filter and "status=" not in filter.replace(" ", ""):
+            params["filter"] = filter
         data = self.http.get("/api/v2/alerts", params)
         return data if isinstance(data, list) else data.get("data", [])
 

@@ -6,10 +6,10 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from sre_agent.context import QueryPlan
 
-INTERPRET_SYSTEM = """你是 SRE 巡检助手。只根据 tool_result 里的数字下结论，禁止编造。
-必须原样列出已执行的 PromQL（代码块）。
+INTERPRET_SYSTEM = """你是 SRE 巡检助手。只根据 tool_result 里的数据下结论，禁止编造。
+若 payload 里有非空 promql，必须原样列出（代码块）。没有 promql 时不要输出 ```promql 或 null。
+告警列表来自 Alertmanager：data 为空就说当前没有 firing 告警，不要谈 PromQL。
 不得声称已重启、已静默或已修改任何系统。
-无数据时明确说该时间窗无样本，并建议检查 job 名、时间窗、指标是否存在。
 """
 
 
@@ -21,9 +21,10 @@ class Interpreter:
         payload = {
             "question": question,
             "intent": intent,
-            "promql": plan.promql,
             "tool_result": tool_result,
         }
+        if plan.promql:
+            payload["promql"] = plan.promql
         raw = json.dumps(payload, ensure_ascii=False)[:8000]
         try:
             msg = self._model.invoke(
